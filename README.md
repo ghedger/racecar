@@ -1,5 +1,6 @@
-=Race Car=
+Racecar
+=======
 
-Fun with locks and race conditions.
+Racecar is a sandbox for simulating concurrency-related issues such as deadlocks, and for implementing and testing various solutions.
 
 
