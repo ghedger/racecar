@@ -33,7 +33,7 @@ class Lock {
   ~Lock() {}
   // Acquire
   inline void Acquire() {
-  #if 0
+    #if 0
     while (lock_) {
       // Occupado, sister; Force a context switch and wait our turn
       // (TODO: Is this even necessary?)

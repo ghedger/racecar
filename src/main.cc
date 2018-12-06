@@ -31,27 +31,31 @@ namespace racecar {
 bool time_to_die = false;
 bool completed_threads= false;
 
-// worker
-// This is the worker thread process.  It
-void *worker(void *params)
+// Worker
+// This Worker thread process simply acquires and releases the lock repeatedly
+// with the expectation other homogenous threads are doing likewise, for
+// lock testing purposes.
+// Entry: params
+// Exit: (ignored)
+void *Worker(void *params)
 {
   struct timespec ts = {0, 100000000L };
   uintptr_t ident = reinterpret_cast<std::uintptr_t>(params);
   while (!time_to_die) {
-      int *singletonInt = Singleton<int>::Instance();
-        Singleton<int>::AcquireLock();
-        std::cout << std::hex << ident << " ";
-        *singletonInt = 17;
-        ts.tv_nsec = (rand() & 1000000) | 1;
-        nanosleep(&ts, NULL);
-        Singleton<int>::ReleaseLock();
-
+    int *singletonInt = Singleton<int>::Instance();
+    Singleton<int>::AcquireLock();
+    std::cout << std::hex << ident << " ";
+    *singletonInt = 17;
+    ts.tv_nsec = (rand() & 1000000) | 1;
+    nanosleep(&ts, NULL);
+    Singleton<int>::ReleaseLock();
   }
   return nullptr;
 }
 
 // initThreads
-void *initThreads(const int thread_tot, const int seconds_to_sleep)
+//
+void *InitThreads(const int thread_tot, const int seconds_to_sleep)
 {
   // Allocate thread pointers
   pthread_t *pthread = (pthread_t *) malloc(thread_tot * sizeof(pthread_t));
@@ -62,7 +66,7 @@ void *initThreads(const int thread_tot, const int seconds_to_sleep)
 
   int error = 0;
   for (auto i = 0; i < thread_tot; i++) {
-    error = pthread_create(pthread + i, NULL, &racecar::worker, (void *)(pthread + i));
+    error = pthread_create(pthread + i, NULL, &racecar::Worker, (void *)(pthread + i));
     if (error) {
       std::cout << __FUNCTION__  << ":" << __LINE__ << std::endl;
     }
@@ -72,7 +76,7 @@ void *initThreads(const int thread_tot, const int seconds_to_sleep)
 
 // shutdownThreads
 
-void shutdownThreads(void *pthread)
+void ShutdownThreads(void *pthread)
 {
   if(pthread) {
     free(pthread);
@@ -81,8 +85,8 @@ void shutdownThreads(void *pthread)
 
 } // namespace racecar
 
-// printUsage
-void printUsage()
+// PrintUsage
+void PrintUsage()
 {
   std::cout << "racecar" << std::endl;
   std::cout << std::endl;
@@ -97,7 +101,7 @@ int main(int argc, const char *argv[])
 {
   // Validate params
   if (argc < 3) {
-    printUsage();
+    PrintUsage();
     return -1;
   }
 
@@ -109,17 +113,17 @@ int main(int argc, const char *argv[])
   sscanf(argv[2], "%d", &seconds_to_sleep);
 
   if (thread_tot <= 0 || seconds_to_sleep <= 0) {
-    printUsage();
+    PrintUsage();
     return -1;
   }
 
-  void *threads = racecar::initThreads(thread_tot, seconds_to_sleep);
+  void *threads = racecar::InitThreads(thread_tot, seconds_to_sleep);
 
   struct timespec ts = {seconds_to_sleep, 10000000L };
 
   nanosleep(&ts, NULL);
 
-  racecar::shutdownThreads(threads);
+  racecar::ShutdownThreads(threads);
 
   // Instantiate some primitive types
   return 0;
